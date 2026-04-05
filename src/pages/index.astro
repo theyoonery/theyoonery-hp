@@ -12,310 +12,275 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 		<title>{SITE_TITLE}</title>
 		<meta name="description" content={SITE_DESCRIPTION} />
 		<style>
-			* {
-				margin: 0;
-				padding: 0;
-				box-sizing: border-box;
-			}
+			* { margin: 0; padding: 0; box-sizing: border-box; }
 			html, body {
 				height: 100%;
 				overflow: hidden;
 			}
 			body {
-				background: #0a0a0f;
-				color: #e0e0e0;
-				font-family: 'Courier New', 'Consolas', monospace;
-			}
-
-			#ascii-bg {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				z-index: 0;
-				overflow: hidden;
-				white-space: pre;
-				font-size: 14px;
-				line-height: 16px;
-				color: #1a1a2e;
-				pointer-events: none;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: radial-gradient(ellipse at 50% 40%, #D4A86A 0%, #A67744 40%, #6B4226 100%);
+				font-family: 'Courier New', monospace;
 				user-select: none;
+				cursor: crosshair;
+				position: relative;
 			}
 
-			#center-content {
+			/* Canvas texture overlay */
+			#canvas-texture {
 				position: fixed;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
+				inset: 0;
+				background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+				pointer-events: none;
 				z-index: 1;
-				text-align: center;
-				pointer-events: auto;
 			}
 
-			#creature {
-				white-space: pre;
-				font-size: 16px;
-				line-height: 1.2;
-				color: #c0c0d0;
-				cursor: pointer;
-				transition: color 0.3s;
-				display: inline-block;
-				min-height: 120px;
+			#face-container {
+				z-index: 5;
+				filter: drop-shadow(0 8px 32px rgba(0,0,0,0.3));
 			}
 
-			#creature:hover {
-				color: #ffffff;
-			}
-
-			#site-title {
-				margin-top: 20px;
-				font-size: 14px;
-				letter-spacing: 0.3em;
-				text-transform: lowercase;
-				color: #555570;
-				transition: color 0.5s;
-			}
-
-			#site-title:hover {
-				color: #8888aa;
-			}
-
-			#hint {
-				margin-top: 12px;
-				font-size: 11px;
-				color: #2a2a40;
-				transition: opacity 0.5s;
+			#face-svg {
+				width: min(80vw, 80vh, 420px);
+				height: min(80vw, 80vh, 420px);
+				transition: transform 0.1s ease;
 			}
 		</style>
 	</head>
 	<body>
-		<div id="ascii-bg"></div>
-		<div id="center-content">
-			<div id="creature"></div>
-			<div id="site-title">{SITE_TITLE}</div>
-			<div id="hint">click me</div>
+		<div id="canvas-texture"></div>
+
+		<div id="face-container">
+			<svg id="face-svg" viewBox="0 0 400 400">
+				<defs>
+					<clipPath id="faceCircle">
+						<circle cx="200" cy="200" r="140" />
+					</clipPath>
+					<filter id="paintTexture">
+						<feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+						<feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+					</filter>
+					<radialGradient id="faceGlow" cx="45%" cy="40%">
+						<stop offset="0%" stop-color="#F2D49B" stop-opacity="0.2" />
+						<stop offset="100%" stop-color="transparent" />
+					</radialGradient>
+				</defs>
+
+				<!-- Neck / stem -->
+				<rect x="175" y="320" width="50" height="60" fill="#8B5E3C" rx="4" />
+				<rect x="168" y="340" width="64" height="16" fill="#6B4226" rx="3" />
+
+				<!-- Head circle base -->
+				<circle cx="200" cy="200" r="140" fill="#E8A74E" filter="url(#paintTexture)" />
+
+				<!-- Face quadrants -->
+				<g clip-path="url(#faceCircle)">
+					<rect x="60" y="60" width="140" height="140" fill="#E8A74E" opacity="0.9" />
+					<rect x="200" y="60" width="140" height="140" fill="#E2B76B" opacity="0.85" />
+					<rect x="60" y="200" width="140" height="140" fill="#C9543D" opacity="0.9" />
+					<rect x="200" y="200" width="140" height="140" fill="#D4713A" opacity="0.85" />
+
+					<!-- Division lines -->
+					<line x1="60" y1="200" x2="340" y2="200" stroke="#5C2D1A" stroke-width="2.5" opacity="0.5" />
+					<line x1="200" y1="60" x2="200" y2="340" stroke="#5C2D1A" stroke-width="2.5" opacity="0.5" />
+
+					<!-- Nose triangle -->
+					<path d="M 195 190 L 205 190 L 200 235 Z" fill="#B5472E" opacity="0.7" />
+					<line x1="200" y1="175" x2="200" y2="230" stroke="#5C2D1A" stroke-width="1.5" opacity="0.5" />
+
+					<!-- Left eyebrow -->
+					<path id="brow-left" d="M 120 155 Q 150 120 180 155" fill="none" stroke="#5C2D1A" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+					<!-- Right eyebrow -->
+					<path id="brow-right" d="M 220 155 Q 250 125 280 155" fill="none" stroke="#5C2D1A" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+
+					<!-- Left eye group -->
+					<g id="eye-left-group">
+						<ellipse id="eye-left" cx="150" cy="175" rx="22" ry="22" fill="#1A1A2E" style="transition: ry 0.12s ease" />
+						<circle id="pupil-left" cx="150" cy="175" r="8" fill="#F2D49B" opacity="0.9" />
+						<circle id="glint-left" cx="150" cy="173" r="3" fill="white" opacity="0.7" />
+					</g>
+
+					<!-- Right eye group -->
+					<g id="eye-right-group">
+						<ellipse id="eye-right" cx="250" cy="170" rx="18" ry="18" fill="#1A1A2E" style="transition: ry 0.12s ease" />
+						<circle id="pupil-right" cx="250" cy="170" r="6" fill="#F2D49B" opacity="0.9" />
+						<circle id="glint-right" cx="250" cy="168" r="2.5" fill="white" opacity="0.7" />
+					</g>
+
+					<!-- Mouth -->
+					<path id="mouth" d="M 180 265 Q 200 270 220 265" fill="none" stroke="#A63D2F" stroke-width="3.5" stroke-linecap="round" />
+
+					<!-- Cheek blush (hidden by default) -->
+					<circle id="blush-left" cx="125" cy="220" r="18" fill="#D4713A" opacity="0" style="transition: opacity 0.5s" />
+					<circle id="blush-right" cx="275" cy="215" r="16" fill="#D4713A" opacity="0" style="transition: opacity 0.5s" />
+
+					<!-- Glow -->
+					<circle cx="200" cy="200" r="140" fill="url(#faceGlow)" />
+				</g>
+
+				<!-- Outline -->
+				<circle cx="200" cy="200" r="140" fill="none" stroke="#5C2D1A" stroke-width="3" opacity="0.6" />
+			</svg>
 		</div>
 
 		<script>
-			// ── ASCII Wave Background ──────────────────────────────
-			const bgEl = document.getElementById('ascii-bg');
-			const chars = ' .·:;+=*#%@';
-			let cols = 0;
-			let rows = 0;
-			let mouseX = 0.5;
-			let mouseY = 0.5;
-			let time = 0;
+			const svg = document.getElementById('face-svg');
+			const eyeLeftGroup = document.getElementById('eye-left-group');
+			const eyeRightGroup = document.getElementById('eye-right-group');
+			const eyeLeft = document.getElementById('eye-left');
+			const eyeRight = document.getElementById('eye-right');
+			const pupilLeft = document.getElementById('pupil-left');
+			const pupilRight = document.getElementById('pupil-right');
+			const glintLeft = document.getElementById('glint-left');
+			const glintRight = document.getElementById('glint-right');
+			const mouth = document.getElementById('mouth');
+			const blushL = document.getElementById('blush-left');
+			const blushR = document.getElementById('blush-right');
+			const browLeft = document.getElementById('brow-left');
+			const browRight = document.getElementById('brow-right');
 
-			function measureGrid() {
-				const testSpan = document.createElement('span');
-				testSpan.textContent = 'M';
-				testSpan.style.fontSize = '14px';
-				testSpan.style.fontFamily = "'Courier New', Consolas, monospace";
-				testSpan.style.position = 'absolute';
-				testSpan.style.visibility = 'hidden';
-				document.body.appendChild(testSpan);
-				const charW = testSpan.offsetWidth;
-				const charH = 16;
-				document.body.removeChild(testSpan);
-				cols = Math.ceil(window.innerWidth / charW) + 1;
-				rows = Math.ceil(window.innerHeight / charH) + 1;
+			let eyeOffset = { x: 0, y: 0 };
+			let breathPhase = 0;
+			let headTilt = 0;
+			let t = 0;
+			let isHovering = false;
+			let isSleepy = false;
+			let idleTime = 0;
+
+			// ── Breathing + head tilt ──
+			function animateBreath() {
+				t += 0.02;
+				breathPhase = Math.sin(t) * 0.5 + 0.5;
+				headTilt = Math.sin(t * 0.7) * 1.5;
+
+				const scale = 1 + breathPhase * 0.012;
+				svg.style.transform = `scale(${scale}) rotate(${headTilt}deg)`;
+
+				requestAnimationFrame(animateBreath);
 			}
+			requestAnimationFrame(animateBreath);
 
-			function renderBg() {
-				time += 0.015;
-				let out = '';
-				for (let y = 0; y < rows; y++) {
-					for (let x = 0; x < cols; x++) {
-						const nx = x / cols;
-						const ny = y / rows;
+			// ── Blinking ──
+			let eyeOpenness = 1;
 
-						// layered sine waves
-						const wave1 = Math.sin(nx * 6 + time * 0.7) * Math.cos(ny * 4 + time * 0.5);
-						const wave2 = Math.sin((nx + ny) * 5 + time * 0.3) * 0.5;
-						const wave3 = Math.cos(nx * 3 - time * 0.6) * Math.sin(ny * 7 + time * 0.4) * 0.3;
-
-						// mouse influence — gentle ripple
-						const dx = nx - mouseX;
-						const dy = ny - mouseY;
-						const dist = Math.sqrt(dx * dx + dy * dy);
-						const mouseWave = Math.sin(dist * 12 - time * 2) * Math.max(0, 0.5 - dist) * 0.8;
-
-						const val = (wave1 + wave2 + wave3 + mouseWave + 1) / 3;
-						const clamped = Math.max(0, Math.min(1, val));
-						const idx = Math.floor(clamped * (chars.length - 1));
-						out += chars[idx];
-					}
-					if (y < rows - 1) out += '\n';
-				}
-				bgEl.textContent = out;
-				requestAnimationFrame(renderBg);
-			}
-
-			document.addEventListener('mousemove', (e) => {
-				mouseX = e.clientX / window.innerWidth;
-				mouseY = e.clientY / window.innerHeight;
-			});
-
-			window.addEventListener('resize', measureGrid);
-			measureGrid();
-			renderBg();
-
-			// ── Tamagotchi Creature ────────────────────────────────
-			const creatureEl = document.getElementById('creature');
-			const hintEl = document.getElementById('hint');
-
-			const frames = {
-				idle: [
-`    ╭──────╮
-    │ •  • │
-    │  ──  │
-    ╰──────╯
-     /|  |\\
-      │  │`,
-
-`    ╭──────╮
-    │ •  • │
-    │  ──  │
-    ╰──────╯
-    /│  │\\
-     │  │`,
-				],
-				blink: [
-`    ╭──────╮
-    │ -  - │
-    │  ──  │
-    ╰──────╯
-     /|  |\\
-      │  │`,
-				],
-				happy: [
-`    ╭──────╮
-    │ ^  ^ │
-    │  ◡◡  │
-    ╰──────╯
-    \\│  │/
-     │  │`,
-
-`    ╭──────╮
-    │ ^  ^ │
-    │  ◡◡  │
-    ╰──────╯
-   \\││  ││/
-     │  │`,
-				],
-				wave: [
-`    ╭──────╮
-    │ •  • │   /
-    │  ◡◡  │──
-    ╰──────╯
-     /|
-      │  │`,
-
-`    ╭──────╮
-    │ •  • │  ─
-    │  ◡◡  │──
-    ╰──────╯
-     /|
-      │  │`,
-
-`    ╭──────╮
-    │ •  • │   \\
-    │  ◡◡  │──
-    ╰──────╯
-     /|
-      │  │`,
-				],
-				sleep: [
-`    ╭──────╮
-    │ -  - │  z
-    │  ──  │   z
-    ╰──────╯    z
-     /|  |\\
-      │  │`,
-
-`    ╭──────╮
-    │ -  - │
-    │  ──  │  z
-    ╰──────╯   z
-     /|  |\\
-      │  │`,
-				],
-			};
-
-			let currentAnim = 'idle';
-			let frameIdx = 0;
-			let tickCount = 0;
-			let isInteracting = false;
-			let idleTicks = 0;
-			let sleeping = false;
-
-			function tick() {
-				tickCount++;
-				idleTicks++;
-
-				// blink randomly during idle
-				if (currentAnim === 'idle' && !isInteracting) {
-					if (Math.random() < 0.05) {
-						currentAnim = 'blink';
-						frameIdx = 0;
-						setTimeout(() => {
-							if (currentAnim === 'blink') {
-								currentAnim = 'idle';
-								frameIdx = 0;
-							}
-						}, 200);
-					}
-				}
-
-				// fall asleep after ~20 seconds of no interaction
-				if (idleTicks > 100 && !sleeping && !isInteracting) {
-					sleeping = true;
-					currentAnim = 'sleep';
-					frameIdx = 0;
-				}
-
-				const animFrames = frames[currentAnim];
-				frameIdx = (frameIdx + 1) % animFrames.length;
-				creatureEl.textContent = animFrames[frameIdx];
-			}
-
-			setInterval(tick, 200);
-
-			// click to make it happy
-			creatureEl.addEventListener('click', () => {
-				isInteracting = true;
-				idleTicks = 0;
-				sleeping = false;
-				hintEl.style.opacity = '0';
-
-				const reactions = ['happy', 'wave'];
-				currentAnim = reactions[Math.floor(Math.random() * reactions.length)];
-				frameIdx = 0;
+			function blink() {
+				if (isSleepy) return;
+				eyeOpenness = 0;
+				eyeLeft.setAttribute('ry', String(22 * 0));
+				eyeRight.setAttribute('ry', String(18 * 0));
+				pupilLeft.style.opacity = '0';
+				pupilRight.style.opacity = '0';
+				glintLeft.style.opacity = '0';
+				glintRight.style.opacity = '0';
 
 				setTimeout(() => {
-					currentAnim = 'idle';
-					frameIdx = 0;
-					isInteracting = false;
-				}, 2000);
+					eyeOpenness = 1;
+					eyeLeft.setAttribute('ry', '22');
+					eyeRight.setAttribute('ry', '18');
+					pupilLeft.style.opacity = '0.9';
+					pupilRight.style.opacity = '0.9';
+					glintLeft.style.opacity = '0.7';
+					glintRight.style.opacity = '0.7';
+				}, 150);
+			}
+
+			function scheduleBlink() {
+				const delay = 3000 + Math.random() * 4000;
+				setTimeout(() => {
+					blink();
+					scheduleBlink();
+				}, delay);
+			}
+			scheduleBlink();
+
+			// ── Eye tracking ──
+			document.addEventListener('mousemove', (e) => {
+				const rect = svg.getBoundingClientRect();
+				const cx = rect.left + rect.width / 2;
+				const cy = rect.top + rect.height / 2;
+				const dx = (e.clientX - cx) / rect.width;
+				const dy = (e.clientY - cy) / rect.height;
+				eyeOffset.x = dx * 4;
+				eyeOffset.y = dy * 3;
+
+				// Apply to eye groups
+				eyeLeftGroup.setAttribute('transform', `translate(${eyeOffset.x}, ${eyeOffset.y})`);
+				eyeRightGroup.setAttribute('transform', `translate(${eyeOffset.x}, ${eyeOffset.y})`);
+
+				// Shift pupils further for parallax
+				pupilLeft.setAttribute('cx', String(150 + eyeOffset.x * 2));
+				pupilLeft.setAttribute('cy', String(175 + eyeOffset.y));
+				glintLeft.setAttribute('cx', String(150 + eyeOffset.x * 2.5));
+				glintLeft.setAttribute('cy', String(173 + eyeOffset.y));
+
+				pupilRight.setAttribute('cx', String(250 + eyeOffset.x * 2));
+				pupilRight.setAttribute('cy', String(170 + eyeOffset.y));
+				glintRight.setAttribute('cx', String(250 + eyeOffset.x * 2.5));
+				glintRight.setAttribute('cy', String(168 + eyeOffset.y));
+
+				// Reset idle timer on movement
+				idleTime = 0;
+				if (isSleepy) wakeUp();
 			});
 
-			// wake up on mouse enter
-			creatureEl.addEventListener('mouseenter', () => {
-				if (sleeping) {
-					sleeping = false;
-					idleTicks = 0;
-					currentAnim = 'blink';
-					frameIdx = 0;
-					setTimeout(() => {
-						currentAnim = 'idle';
-						frameIdx = 0;
-					}, 400);
+			// ── Hover: happy face with blush ──
+			svg.addEventListener('mouseenter', () => {
+				isHovering = true;
+				idleTime = 0;
+				if (isSleepy) wakeUp();
+				mouth.setAttribute('d', 'M 175 260 Q 200 280 225 260');
+				blushL.setAttribute('opacity', '0.25');
+				blushR.setAttribute('opacity', '0.2');
+			});
+
+			svg.addEventListener('mouseleave', () => {
+				isHovering = false;
+				if (!isSleepy) {
+					mouth.setAttribute('d', 'M 180 265 Q 200 270 220 265');
 				}
+				blushL.setAttribute('opacity', '0');
+				blushR.setAttribute('opacity', '0');
 			});
 
-			// initial render
-			creatureEl.textContent = frames.idle[0];
+			// ── Sleepy state after inactivity ──
+			function goSleepy() {
+				isSleepy = true;
+				// Half-closed eyes
+				eyeLeft.setAttribute('ry', String(22 * 0.35));
+				eyeRight.setAttribute('ry', String(18 * 0.35));
+				pupilLeft.style.opacity = '0.4';
+				pupilRight.style.opacity = '0.4';
+				glintLeft.style.opacity = '0.2';
+				glintRight.style.opacity = '0.2';
+				// Drowsy brows
+				browLeft.setAttribute('opacity', '0.4');
+				browRight.setAttribute('opacity', '0.4');
+				// Flat mouth
+				mouth.setAttribute('d', 'M 185 265 L 215 265');
+			}
+
+			function wakeUp() {
+				isSleepy = false;
+				eyeLeft.setAttribute('ry', '22');
+				eyeRight.setAttribute('ry', '18');
+				pupilLeft.style.opacity = '0.9';
+				pupilRight.style.opacity = '0.9';
+				glintLeft.style.opacity = '0.7';
+				glintRight.style.opacity = '0.7';
+				browLeft.setAttribute('opacity', '0.8');
+				browRight.setAttribute('opacity', '0.8');
+				mouth.setAttribute('d', isHovering ? 'M 175 260 Q 200 280 225 260' : 'M 180 265 Q 200 270 220 265');
+			}
+
+			setInterval(() => {
+				idleTime++;
+				// Fall asleep after ~30 seconds of no mouse movement
+				if (idleTime > 30 && !isSleepy) {
+					goSleepy();
+				}
+			}, 1000);
 		</script>
 	</body>
 </html>
